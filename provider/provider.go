@@ -6,6 +6,7 @@ import (
 	"github.com/selefra/selefra-provider-sdk/provider/schema"
 	"github.com/selefra/selefra-provider-zendesk/zendesk_client"
 	"github.com/spf13/viper"
+	"os"
 )
 
 const Version = "v0.0.1"
@@ -26,6 +27,30 @@ func GetProvider() *provider.Provider {
 
 				if len(zendeskConfig.Providers) == 0 {
 					zendeskConfig.Providers = append(zendeskConfig.Providers, zendesk_client.Config{})
+				}
+
+				if zendeskConfig.Providers[0].SubDomain == "" {
+					zendeskConfig.Providers[0].SubDomain = os.Getenv("ZENDESK_SUBDOMAIN")
+				}
+
+				if zendeskConfig.Providers[0].SubDomain == "" {
+					return nil, schema.NewDiagnostics().AddErrorMsg("missing SubDomain in configuration")
+				}
+
+				if zendeskConfig.Providers[0].Email == "" {
+					zendeskConfig.Providers[0].Email = os.Getenv("ZENDESK_EMAIL")
+				}
+
+				if zendeskConfig.Providers[0].Email == "" {
+					return nil, schema.NewDiagnostics().AddErrorMsg("missing email in configuration")
+				}
+
+				if zendeskConfig.Providers[0].Token == "" {
+					zendeskConfig.Providers[0].Token = os.Getenv("ZENDESK_TOKEN")
+				}
+
+				if zendeskConfig.Providers[0].Token == "" {
+					return nil, schema.NewDiagnostics().AddErrorMsg("missing token in configuration")
 				}
 
 				clients, err := zendesk_client.NewClients(zendeskConfig)
@@ -58,10 +83,6 @@ func GetProvider() *provider.Provider {
 
 				if err != nil {
 					return schema.NewDiagnostics().AddErrorMsg("analysis config err: %s", err.Error())
-				}
-
-				if len(client_config.Providers) == 0 {
-					return schema.NewDiagnostics().AddErrorMsg("analysis config err: no configuration")
 				}
 
 				return nil
